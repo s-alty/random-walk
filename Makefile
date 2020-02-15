@@ -1,5 +1,6 @@
 
-plot.png: random-walk.data plot.gpl
+plots/trials.png: random-walk.data plot.gpl
+	-mkdir plots
 	gnuplot plot.gpl
 
 random-walk.data: rw.beam

@@ -1,5 +1,5 @@
 set terminal png font "DejaVu Sans Mono" 18 fontscale 1.0 size 1280, 960
-set output "plot.png"
+set output "plots/trials.png"
 
 
 set title "Random Walk from x=0 to x=1"
