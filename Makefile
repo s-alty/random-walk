@@ -1,7 +1,13 @@
-
-plots/trials.png: data/random-walk.data plot.gpl
+plots/pmf.png: data/pmf.data pmf.gpl
 	-mkdir plots
-	gnuplot plot.gpl
+	gnuplot pmf.gpl
+
+plots/trials.png: data/random-walk.data trials.gpl
+	-mkdir plots
+	gnuplot trials.gpl
+
+data/pmf.data: data/random-walk.data
+	uniq -c data/random-walk.data | awk '{print $$2, $$1, $$1 / 10000}' > data/pmf.data
 
 data/random-walk.data: rw.beam
 	-mkdir data

@@ -2,7 +2,7 @@ set terminal png font "DejaVu Sans Mono" 18 fontscale 1.0 size 1280, 960
 set output "plots/trials.png"
 
 
-set title "Random Walk from x=0 to x=1"
+set title "Random Walk from 0 to 1"
 
 unset key
 set xlabel "Trial Number (sorted)"
@@ -13,4 +13,4 @@ set ylabel "Number of steps required"
 set grid
 set border 3
 
-plot "random-walk.data" using 0:1 with points pt 7 lc rgb "#64bc52" ps 0.9
+plot "data/random-walk.data" using 0:1 with points pt 7 lc rgb "#64bc52" ps 0.9
