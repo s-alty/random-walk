@@ -1,0 +1,87 @@
+* Random Walk
+A random walk is a probability model where a sequence of independent
+coin flips determines the position of a walker.
+
+In the simplest form of the model the walker moves in a single dimension with each step resulting in a
+change of either +1 or -1 (A "heads" or "success" results in +1 and a "tails" or "failure" results in -1).
+
+Some interesting questions emerge:
+
+1. What is the expected location of a walker who starts at origin after n flips?
+
+2. What is the expected distance traveled from the origin after n flips?
+
+3. Given a walker who starts at the origin, what is the expected number of flips required to reach position 1?
+
+** Monte Carlo
+Monte Carlo Simulations are an empirical approach to solving probability problems.
+Instead of deriving a formula and calculating the solution, a large number of
+simulations are run and a solution is inferred from the results.
+
+For example, the probability that some event ~A~ occurs is approximated by the
+proportion of trials in the simulation in which ~A~ was observed. This approximation improves
+as the number of trials simulated increases.
+
+** Monte Carlo Simulations in Erlang
+Erlang's actor model is useful for conducting Monte Carlo simulations.
+
+One approach is to spawn an erlang process for each trial. This allows the
+trials to run in parallel and can greatly decrease the time required to
+run the simulation.
+
+#+BEGIN_SRC erlang
+run(Target, Count) ->
+    Pids = for(Count, fun() -> spawn(?MODULE, trial, [Target]) end),
+    lists:map(fun(Pid) ->
+                      Pid ! {self(), report},
+                      receive
+                          {Pid, Result} -> Result
+                      end
+              end, Pids).
+#+END_SRC
+
+The example above spawns one process for each trial of the simulation,
+then iterates through them, sending a message, and waiting for a response
+to collect the results.
+
+** Estimating the expected number of flips required to reach the next positon
+Each trial of the simulation started at position 0 and recorded the
+required number of flips of a fair coin (~P(HEADS)=.5~) to reach postion 1. 10,000 trials were run in total.
+
+
+[[./plots/trials.png]]
+
+The plot above graphs the number of flips required for each trial
+ordered from fewest flips to most flips.
+
+Intuitvely, around half of the trials (5082) required only a single flip.
+More suprisingly, several trials required millions of flips, with the longest trial
+requiring *161,825,675* flips.
+
+The plot shows us that ~25% of trials required more than 10 flips, ~8% of
+trials took more than 100 flips and 3% took more than 1000 flips.
+
+[[./plots/pmf.png]]
+
+Another way of visualizing the data is a probability mass function plot.
+
+Let ~X~ be a random variable that denotes the number of flips required to
+reach position 0 from postion 1. The probability mass function answers the question
+"What is the probability that ~X=k~?" for some number of steps ~k~. For example based
+on the data from the simulation the probability that ~X=3~ (three flips were required to reach postion 1)
+was around ~.12~
+
+One thing that stands out above is that plot has a very long tail.
+Though the x axis is truncated at 200, results requiring large number of
+flips continued to occur all the way up to 161,825,675. Although they do get further spread out as x increases.
+
+The expected value is calculated by summing over all possible values ~k~
+of the random variable the expression ~k * P(X=k)~. Using our Monte carlo
+data we set ~P(X=k)~ to the proportion of trials that resulted in ~k~ flips.
+
+By pulling the ~1/10,000~ out of the denominator of the sum and observing
+that the probability for any value ~k~ that was never observed in the simulation
+is ~0~, we get the result ~196,151,014/10,000 = 19,615.1~.
+
+So the expected value as estimated by monte carlo simulation was dominated
+by the trial that had the largest number of flips.
