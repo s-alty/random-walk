@@ -5,13 +5,7 @@ coin flips determines the position of a walker.
 In the simplest form of the model the walker moves in a single dimension with each step resulting in a
 change of either +1 or -1 (A "heads" or "success" results in +1 and a "tails" or "failure" results in -1).
 
-Some interesting questions emerge:
-
-1. What is the expected location of a walker who starts at origin after n flips?
-
-2. What is the expected distance traveled from the origin after n flips?
-
-3. Given a walker who starts at the origin, what is the expected number of flips required to reach position 1?
+One interesting question is "Given a walker who starts at the origin, what is the expected number of flips required to reach position 1?"
 
 ** Monte Carlo
 Monte Carlo Simulations are an empirical approach to solving probability problems.
@@ -44,9 +38,9 @@ The example above spawns one process for each trial of the simulation,
 then iterates through them, sending a message, and waiting for a response
 to collect the results.
 
-** Estimating the expected number of flips required to reach the next positon
+** Estimating the expected number of flips required to reach the next position
 Each trial of the simulation started at position 0 and recorded the
-required number of flips of a fair coin (~P(HEADS)=.5~) to reach postion 1. 10,000 trials were run in total.
+required number of flips of a fair coin (~P(HEADS)=.5~) to reach position 1. 10,000 trials were run in total.
 
 
 [[./plots/trials.png]]
@@ -54,8 +48,8 @@ required number of flips of a fair coin (~P(HEADS)=.5~) to reach postion 1. 10,0
 The plot above graphs the number of flips required for each trial
 ordered from fewest flips to most flips.
 
-Intuitvely, around half of the trials (5082) required only a single flip.
-More suprisingly, several trials required millions of flips, with the longest trial
+Intuitively, around half of the trials (5082) required only a single flip.
+More surprisingly, several trials required millions of flips, with the longest trial
 requiring *161,825,675* flips.
 
 The plot shows us that ~25% of trials required more than 10 flips, ~8% of
@@ -66,9 +60,9 @@ trials took more than 100 flips and 3% took more than 1000 flips.
 Another way of visualizing the data is a probability mass function plot.
 
 Let ~X~ be a random variable that denotes the number of flips required to
-reach position 0 from postion 1. The probability mass function answers the question
+reach position 1 from position 0. The probability mass function answers the question
 "What is the probability that ~X=k~?" for some number of steps ~k~. For example based
-on the data from the simulation the probability that ~X=3~ (three flips were required to reach postion 1)
+on the data from the simulation the probability that ~X=3~ (three flips were required to reach position 1)
 was around ~.12~
 
 One thing that stands out above is that plot has a very long tail.
@@ -81,7 +75,180 @@ data we set ~P(X=k)~ to the proportion of trials that resulted in ~k~ flips.
 
 By pulling the ~1/10,000~ out of the denominator of the sum and observing
 that the probability for any value ~k~ that was never observed in the simulation
-is ~0~, we get the result ~196,151,014/10,000 = 19,615.1~.
+is ~0~, we get the result ~196,151,014/10,000 = 19,615.1~. This is a very different
+answer from the median number of flips required, which was just ~1~.
 
 So the expected value as estimated by monte carlo simulation was dominated
 by the trial that had the largest number of flips.
+
+** Analytical Solution
+We want to find the expected number of flips required to progress from position 0 to position 1.
+
+~k~ takes integer values between 1 and infinity, so the expected value is
+
+# \begin{quote}
+# E[X] = \sum_{k=1}^\infty kP(X = k)
+# \end{quote}
+
+[[./ltximg/expected_value_definition.png]]
+
+For each possible number of flips ~k~ we have to find the probability
+that it took ~k~ flips to reach position 1.
+
+As a concrete example, consider the sequence of coin flips resulting in ~k=5~ steps.
+This is possible in only two ways: ~THTHH~ or ~TTHHH~. Since the coin flips
+are independent, the probability of observing a sequence of flips is the
+product of the probabilities of observing each flip in the sequence.
+
+If we say that the probability of heads is ~p~ and the probability of tails is ~(1-p)~
+then:
+
+# \begin{quote}
+# P(THTHH) = P(TTHHH) = p^3(1-p)^2
+# \end{quote}
+
+[[./ltximg/probability_of_sequence.png]]
+
+Since each sequence is mutually exclusive, then the probability of observing either
+of them is the sum of their probabilities. We can therefore conclude that
+
+# \begin{quote}
+# P(X=5) = 2p^3(1-p)^2
+# \end{quote}
+
+[[./ltximg/probability_of_value.png]]
+
+We can continue by explicitly enumerating the sequences of flips for small values of ~k~.
+
+
+| k | number of sequences | probability of a single sequence | kP(X=k)      |
+|---+---------------------+----------------------------------+--------------|
+| 1 |                   1 | p                                | 1*1*p        |
+| 2 |                   0 | 0                                | 0            |
+| 3 |                   1 | p²(1-p)                          | 3*1*p²(1-p)  |
+| 4 |                   0 | 0                                | 0            |
+| 5 |                   2 | p³(1-p)²                         | 5*2*p³(1-p)² |
+| 6 |                   0 | 0                                | 0            |
+| 7 |                   5 | p⁴(1-p)³                         | 7*5*p⁴(1-p)³ |
+
+
+We can already see some patterns emerging:
+
+1. The number of heads must be one greater than the number of tails.
+2. The probability that ~X=k~ is 0 for every even ~k~. This follows from 1.
+3. Since ~k~ must be odd, let ~k=2m+1~. The probability of a single sequence is
+
+# \begin{quote}
+# p^{m+1}(1-p)^m
+# \end{quote}
+
+[[./ltximg/probability_of_sequence2.png]]
+
+*** Calculating the number of sequences
+
+Now that we have an expression for the probability of a single sequence, our problem
+is reduced to finding the number of valid sequences for each ~k~.
+
+Some additional observations:
+
+1. Each valid sequence ends with ~H~. The final flip must be the success that brings us from position 0 to position 1.
+2. While generating a sequence, the number of heads observed must always be less than or equal to the number of tails observed until the very end of the sequence (otherwise we would reach the goal prematurely).
+
+Since the last element of the sequence is fixed at ~H~, the number of valid sequences of length ~k=2m+1~ is similar to
+the number of ways of placing ~m~ heads in ~2m~ slots. This is just:
+
+# \begin{quote}
+# \dbinom{2m}{m}
+# \end{quote}
+
+[[./ltximg/num_sequences.png]]
+
+But we have an additional constraint that some of these sequences will be invalidated by observation #2 above.
+
+How many will be invalid?
+
+The following python snippet prints valid arrangements in green and invalid arrangements in red for a sequence of length 7.
+
+#+BEGIN_SRC python
+import itertools
+
+def all_flips(n):
+    # all 2^n possible coin flips
+    return (''.join(s) for s in itertools.product('HT', repeat=n))
+
+def num_heads(s):
+    return sum(1 for el in s if el == 'H')
+
+def num_tails(s):
+    return sum(1 for el in s if el == 'T')
+
+def candidates(n):
+    flips = all_flips(n)
+    correct_end = (s for s in flips if s[-1] == 'H')
+    correct_counts = (s for s in correct_end if num_heads(s[:-1]) == num_tails(s[:-1]))
+    return correct_counts
+
+def has_valid_order(seq):
+    # nhead <= ntails until very end
+    counts = {}
+    for c in seq[:-1]:
+        counts[c] = counts.get(c, 0) + 1
+        nheads = counts.get('H', 0)
+        ntails = counts.get('T', 0)
+        if nheads > ntails: return False
+    return True
+
+for seq in candidates(7):
+    if has_valid_order(x):
+        print('\033[92m{}\033[0m'.format(x))
+    else:
+        print('\033[91m{}\033[0m'.format(x))
+#+END_SRC
+
+# \begin{quote}
+# 15 = \dbinom{6}{4}
+# \end{quote}
+
+[[./ltximg/num_sequences2.png]] Of the 20 possible arrangements are invalid.
+
+In general the number of invalid arrangements is [[./ltximg/num_sequences3.png]]
+
+# \begin{quote}
+# \dbinom{2m}{m+1}
+# \end{quote}
+
+Consult Brualdi's /Introductory Combinatorics/ for a full proof.
+
+The number of valid arrangements is the total number of arrangements less the invalid arrangements:
+
+# \begin{quote}
+# \dbinom{2m}{m} - \dbinom{2m}{m+1}
+# \end{quote}
+
+[[./ltximg/num_sequences4.png]]
+
+Which simlpifies to [[./ltximg/num_sequences5.png]]
+
+# \begin{quote}
+# \dfrac{1}{m+1} \dbinom{2m}{m}
+# \end{quote}
+
+This is known as a [[https://en.wikipedia.org/wiki/Catalan_number][Catalan Number]].
+
+*** Bringing it together
+
+To summarize, we have for odd ~k=2m+1~ the number of valid random walks with ~k~ steps is
+
+[[./ltximg/num_sequences5.png]]
+
+and each sequence has probability
+
+[[./ltximg/probability_of_sequence2.png]]
+
+So we have that the expected value is
+
+# \begin{quote}
+# E[X] = \sum_{m=0}^\infty (2m+1)P(X=2m+1) = \sum_{m=0}^\infty \frac{2m+1}{m+1} \dbinom{2m}{m} p^{m+1}(1-p)^m
+# \end{quote}
+
+[[./ltximg/end.png]]
